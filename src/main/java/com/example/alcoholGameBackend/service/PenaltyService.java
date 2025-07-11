@@ -52,27 +52,37 @@ public class PenaltyService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("방을 찾을 수 없습니다."));
 
-        List<Player> players = playerRepository.findByRoomIdOrderByPenaltyCountDesc(roomId);
-        
-        if (players.isEmpty()) {
-            throw new RuntimeException("방에 참가자가 없습니다.");
-        }
+        Player originalDrawer = playerRepository.findById(request.getPlayerId())
+                .orElseThrow(() -> new RuntimeException("플레이어를 찾을 수 없습니다."));
 
-        Player winner = selectRandomPlayer(players);
         String penaltyContent = PENALTY_CONTENTS[random.nextInt(PENALTY_CONTENTS.length)];
+        
+        List<Player> allPlayersInRoom = playerRepository.findByRoomIdOrderByPenaltyCountDesc(roomId);
+        
+        boolean isRandomTarget = random.nextInt(100) < 10;
+        Player penaltyTarget;
+        
+        if (isRandomTarget && allPlayersInRoom.size() > 1) {
+            List<Player> otherPlayers = allPlayersInRoom.stream()
+                    .filter(p -> !p.getId().equals(originalDrawer.getId()))
+                    .toList();
+            penaltyTarget = selectRandomPlayer(otherPlayers);
+        } else {
+            penaltyTarget = originalDrawer;
+            isRandomTarget = false;
+        }
 
         PenaltyLog penaltyLog = new PenaltyLog();
         penaltyLog.setRoom(room);
-        penaltyLog.setPlayer(winner);
+        penaltyLog.setPlayer(penaltyTarget);
+        penaltyLog.setOriginalDrawer(originalDrawer);
         penaltyLog.setPenaltyContent(penaltyContent);
+        penaltyLog.setRandomTarget(isRandomTarget);
         
         PenaltyLog savedLog = penaltyLogRepository.save(penaltyLog);
 
-        winner.setPenaltyCount(winner.getPenaltyCount() + 1);
-        playerRepository.save(winner);
-
-        webSocketController.notifyPenaltyDrawn(roomId, winner.getNickname(), penaltyContent);
-        pushNotificationService.sendPenaltyNotification(roomId, winner.getNickname());
+        penaltyTarget.setPenaltyCount(penaltyTarget.getPenaltyCount() + 1);
+        playerRepository.save(penaltyTarget);
 
         return new DrawPenaltyResponse(savedLog.getDrawResultId());
     }
@@ -82,10 +92,28 @@ public class PenaltyService {
         PenaltyLog penaltyLog = penaltyLogRepository.findByDrawResultId(drawResultId)
                 .orElseThrow(() -> new RuntimeException("뽑기 결과를 찾을 수 없습니다."));
 
+        String originalDrawerNickname = penaltyLog.getOriginalDrawer() != null 
+                ? penaltyLog.getOriginalDrawer().getNickname() 
+                : penaltyLog.getPlayer().getNickname();
+
         return new DrawResultResponse(
                 penaltyLog.getPlayer().getNickname(),
-                penaltyLog.getPenaltyContent()
+                penaltyLog.getPenaltyContent(),
+                penaltyLog.isRandomTarget(),
+                originalDrawerNickname
         );
+    }
+
+    public void notifyPenaltyRevealed(UUID drawResultId) {
+        PenaltyLog penaltyLog = penaltyLogRepository.findByDrawResultId(drawResultId)
+                .orElseThrow(() -> new RuntimeException("뽑기 결과를 찾을 수 없습니다."));
+
+        UUID roomId = penaltyLog.getRoom().getId();
+        String winnerNickname = penaltyLog.getPlayer().getNickname();
+        String penaltyContent = penaltyLog.getPenaltyContent();
+
+        webSocketController.notifyPenaltyDrawn(roomId, winnerNickname, penaltyContent);
+        pushNotificationService.sendPenaltyNotification(roomId, winnerNickname);
     }
 
     private Player selectRandomPlayer(List<Player> players) {

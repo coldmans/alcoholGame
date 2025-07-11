@@ -67,4 +67,17 @@ public class WebSocketController {
                 message
         );
     }
+
+    public void notifyPlayerKicked(UUID roomId, String kickedNickname) {
+        Map<String, Object> message = Map.of(
+                "type", "PLAYER_KICKED",
+                "nickname", kickedNickname,
+                "timestamp", System.currentTimeMillis()
+        );
+        
+        messagingTemplate.convertAndSend(
+                "/topic/room/" + roomId + "/players",
+                message
+        );
+    }
 }

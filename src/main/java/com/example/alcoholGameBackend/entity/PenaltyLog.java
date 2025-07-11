@@ -38,6 +38,13 @@ public class PenaltyLog {
     @Column(name = "draw_result_id", nullable = false, unique = true)
     private UUID drawResultId;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "original_drawer_id")
+    private Player originalDrawer;
+    
+    @Column(name = "is_random_target", nullable = false)
+    private boolean isRandomTarget = false;
+    
     @PrePersist
     protected void onCreate() {
         drawnAt = LocalDateTime.now();

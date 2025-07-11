@@ -51,4 +51,12 @@ public class RoomController {
         List<PlayerDto> ranking = roomService.getRanking(roomId);
         return ResponseEntity.ok(ranking);
     }
+
+    @PostMapping("/{roomId}/kick")
+    public ResponseEntity<ApiResponse> kickPlayer(
+            @PathVariable UUID roomId,
+            @RequestBody KickPlayerRequest request) {
+        roomService.kickPlayer(roomId, request);
+        return ResponseEntity.ok(new ApiResponse("success"));
+    }
 }

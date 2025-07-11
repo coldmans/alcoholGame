@@ -19,4 +19,6 @@ public interface PlayerRepository extends JpaRepository<Player, UUID> {
     
     @Query("SELECT p FROM Player p WHERE p.room.id = :roomId ORDER BY p.penaltyCount DESC")
     List<Player> findRankingByRoomId(@Param("roomId") UUID roomId);
+    
+    Optional<Player> findByRoomIdAndNickname(UUID roomId, String nickname);
 }

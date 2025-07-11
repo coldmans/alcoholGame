@@ -8,4 +8,6 @@ import lombok.AllArgsConstructor;
 public class DrawResultResponse {
     private String winnerNickname;
     private String penaltyContent;
+    private boolean isRandomTarget;
+    private String originalDrawerNickname;
 }
