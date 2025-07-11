@@ -7,9 +7,8 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class PlayerDto {
-    private UUID playerId;
-    private String nickname;
-    private int penaltyCount;
-    private String sessionId;
+public class RoomInfoResponse {
+    private UUID roomId;
+    private String hostSessionId;
+    private String inviteLink;
 }

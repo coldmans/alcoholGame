@@ -59,4 +59,16 @@ public class RoomController {
         roomService.kickPlayer(roomId, request);
         return ResponseEntity.ok(new ApiResponse("success"));
     }
+
+    @GetMapping("/{roomId}")
+    public ResponseEntity<RoomInfoResponse> getRoomInfo(@PathVariable UUID roomId) {
+        RoomInfoResponse roomInfo = roomService.getRoomInfo(roomId);
+        return ResponseEntity.ok(roomInfo);
+    }
+
+    @GetMapping("/{roomId}/penalties/recent")
+    public ResponseEntity<List<PenaltyLogDto>> getRecentPenalties(@PathVariable UUID roomId) {
+        List<PenaltyLogDto> recentPenalties = penaltyService.getRecentPenalties(roomId);
+        return ResponseEntity.ok(recentPenalties);
+    }
 }

@@ -75,7 +75,8 @@ public class RoomService {
                 .map(player -> new PlayerDto(
                         player.getId(),
                         player.getNickname(),
-                        player.getPenaltyCount()
+                        player.getPenaltyCount(),
+                        player.getSessionId()
                 ))
                 .collect(Collectors.toList());
     }
@@ -88,7 +89,8 @@ public class RoomService {
                 .map(player -> new PlayerDto(
                         player.getId(),
                         player.getNickname(),
-                        player.getPenaltyCount()
+                        player.getPenaltyCount(),
+                        player.getSessionId()
                 ))
                 .collect(Collectors.toList());
     }
@@ -112,5 +114,19 @@ public class RoomService {
         playerRepository.delete(playerToKick);
 
         webSocketController.notifyPlayerKicked(roomId, kickedNickname);
+    }
+
+    @Transactional(readOnly = true)
+    public RoomInfoResponse getRoomInfo(UUID roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("방을 찾을 수 없습니다."));
+
+        String inviteLink = frontendUrl + "/join?roomId=" + room.getId();
+        
+        return new RoomInfoResponse(
+                room.getId(),
+                room.getHostSessionId(),
+                inviteLink
+        );
     }
 }

@@ -94,4 +94,36 @@ public class PushNotificationService {
             });
         });
     }
+
+    public void sendChatNotification(UUID roomId, String senderNickname, String content) {
+        if (pushService == null) {
+            log.info("푸시 서비스가 비활성화되어 있습니다.");
+            return;
+        }
+
+        List<PushSubscription> subscriptions = pushSubscriptionRepository.findByPlayerRoomId(roomId);
+
+        String title = "💬 새로운 채팅 메시지";
+        String body = senderNickname + ": " + (content.length() > 50 ? content.substring(0, 50) + "..." : content);
+
+        subscriptions.forEach(subscription -> {
+            if (!subscription.getPlayer().getNickname().equals(senderNickname)) {
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        Notification notification = new Notification(
+                                subscription.getEndpoint(),
+                                subscription.getP256dh(),
+                                subscription.getAuth(),
+                                String.format("{\"title\":\"%s\",\"body\":\"%s\",\"icon\":\"/icon-192x192.png\"}", title, body)
+                        );
+
+                        pushService.send(notification);
+                        log.info("채팅 푸시 알림 전송 성공: {}", subscription.getEndpoint());
+                    } catch (Exception e) {
+                        log.error("채팅 푸시 알림 전송 실패: {}", subscription.getEndpoint(), e);
+                    }
+                });
+            }
+        });
+    }
 }

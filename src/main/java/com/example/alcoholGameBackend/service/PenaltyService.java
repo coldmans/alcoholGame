@@ -3,6 +3,7 @@ package com.example.alcoholGameBackend.service;
 import com.example.alcoholGameBackend.dto.DrawPenaltyRequest;
 import com.example.alcoholGameBackend.dto.DrawPenaltyResponse;
 import com.example.alcoholGameBackend.dto.DrawResultResponse;
+import com.example.alcoholGameBackend.dto.PenaltyLogDto;
 import com.example.alcoholGameBackend.entity.PenaltyLog;
 import com.example.alcoholGameBackend.entity.Player;
 import com.example.alcoholGameBackend.entity.Room;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +61,7 @@ public class PenaltyService {
         
         List<Player> allPlayersInRoom = playerRepository.findByRoomIdOrderByPenaltyCountDesc(roomId);
         
-        boolean isRandomTarget = random.nextInt(100) < 10;
+        boolean isRandomTarget = random.nextInt(100) < 90;
         Player penaltyTarget;
         
         if (isRandomTarget && allPlayersInRoom.size() > 1) {
@@ -96,6 +98,10 @@ public class PenaltyService {
                 ? penaltyLog.getOriginalDrawer().getNickname() 
                 : penaltyLog.getPlayer().getNickname();
 
+        System.out.println("DEBUG - isRandomTarget: " + penaltyLog.isRandomTarget());
+        System.out.println("DEBUG - originalDrawerNickname: " + originalDrawerNickname);
+        System.out.println("DEBUG - winnerNickname: " + penaltyLog.getPlayer().getNickname());
+
         return new DrawResultResponse(
                 penaltyLog.getPlayer().getNickname(),
                 penaltyLog.getPenaltyContent(),
@@ -114,6 +120,24 @@ public class PenaltyService {
 
         webSocketController.notifyPenaltyDrawn(roomId, winnerNickname, penaltyContent);
         pushNotificationService.sendPenaltyNotification(roomId, winnerNickname);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PenaltyLogDto> getRecentPenalties(UUID roomId) {
+        List<PenaltyLog> penaltyLogs = penaltyLogRepository.findRecentPenaltiesByRoomId(roomId);
+        
+        return penaltyLogs.stream()
+                .map(log -> new PenaltyLogDto(
+                        log.getId(),
+                        log.getPlayer().getNickname(),
+                        log.getPenaltyContent(),
+                        log.getDrawnAt(),
+                        log.isRandomTarget(),
+                        log.getOriginalDrawer() != null 
+                                ? log.getOriginalDrawer().getNickname() 
+                                : log.getPlayer().getNickname()
+                ))
+                .collect(Collectors.toList());
     }
 
     private Player selectRandomPlayer(List<Player> players) {

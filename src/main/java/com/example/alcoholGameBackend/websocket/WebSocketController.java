@@ -1,5 +1,6 @@
 package com.example.alcoholGameBackend.websocket;
 
+import com.example.alcoholGameBackend.service.PushNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class WebSocketController {
 
     private final SimpMessageSendingOperations messagingTemplate;
+    private final PushNotificationService pushNotificationService;
 
     @MessageMapping("/room/{roomId}/chat")
     public void handleChatMessage(@DestinationVariable String roomId, @Payload Map<String, Object> message) {
@@ -26,6 +28,13 @@ public class WebSocketController {
                 "/topic/room/" + roomId + "/chat",
                 message
         );
+        
+        String senderNickname = (String) message.get("nickname");
+        String content = (String) message.get("content");
+        
+        if (senderNickname != null && content != null) {
+            pushNotificationService.sendChatNotification(UUID.fromString(roomId), senderNickname, content);
+        }
     }
 
     public void notifyPlayerJoined(UUID roomId, String nickname) {
