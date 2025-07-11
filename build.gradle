@@ -54,7 +54,8 @@ dependencies {
 	// 테스트 관련
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	implementation 'nl.martijndwars.web-push:web-push:5.1.2'
+	testImplementation 'org.mockito:mockito-core'
+	implementation 'nl.martijndwars:web-push:5.1.1'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
