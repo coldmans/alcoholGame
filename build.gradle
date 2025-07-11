@@ -1,0 +1,63 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Spring Web: 웹 애플리케이션 개발 (REST API 등)
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// Spring Data JPA: 데이터베이스 연동 (ORM)
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// PostgreSQL Driver: PostgreSQL 데이터베이스 사용
+	runtimeOnly 'org.postgresql:postgresql'
+
+	// Lombok: Getter, Setter 등 boilerplate 코드 자동 생성
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// WebSocket (STOMP): 실시간 통신 (벌칙 뽑기 알림 등)
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// Spring Security: 보안 (CORS 설정, API 인증 등) - 필수!
+	// 웹 푸시와 CORS를 위해 필요합니다.
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// Validation (선택 사항): DTO 유효성 검사
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+
+	// 개발 도구 (선택 사항): 개발 시 편의성 제공
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// 테스트 관련
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	implementation 'nl.martijndwars.web-push:web-push:5.1.2'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
